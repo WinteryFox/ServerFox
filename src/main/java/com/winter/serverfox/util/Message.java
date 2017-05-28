@@ -11,11 +11,19 @@ public class Message {
 		RequestBuffer.request(() -> channel.sendMessage(String.format(Localisation.getMessage(channel.getGuild(), message), args)));
 	}
 
+	public static void sendRawMessageInChannel(IChannel channel, String message) {
+		RequestBuffer.request(() -> channel.sendMessage(message)).get();
+	}
+
 	public static void addReaction(IMessage message, String reaction) {
-		RequestBuffer.request(() -> message.addReaction(reaction));
+		RequestBuffer.request(() -> message.addReaction(reaction)).get();
 	}
 
 	public static void sendEmbedInChannel(IChannel channel, String message, EmbedObject embed) {
-		RequestBuffer.request(() -> channel.sendMessage(message, embed));
+		RequestBuffer.request(() -> channel.sendMessage(message, embed)).get();
+	}
+
+	public static void reply(IMessage message, String content) {
+		RequestBuffer.request(() -> message.reply(content)).get();
 	}
 }

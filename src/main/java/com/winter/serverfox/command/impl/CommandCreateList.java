@@ -9,11 +9,7 @@ import sx.blah.discord.handle.obj.IChannel;
 import sx.blah.discord.util.EmbedBuilder;
 
 import java.awt.*;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 
 public class CommandCreateList implements Command {
 
@@ -26,38 +22,47 @@ public class CommandCreateList implements Command {
 
 	@Override
 	public void action(String[] args, String raw, MessageReceivedEvent event) {
-		if (args.length >= 3) {
-			IChannel channel = Utility.getChannel(event, args[0]);
-			if (channel != null) {
-				EmbedBuilder builder = new EmbedBuilder();
-				builder.withColor(Color.CYAN);
-				URL url;
-				try {
-					url = new URL(args[3]);
-				} catch (MalformedURLException e) {
-					Message.sendMessageInChannel(event.getChannel(), "wrong-image");
-					e.printStackTrace();
-					return;
-				}
-				try {
-					builder.withImage(url.toURI().toASCIIString());
-				} catch (URISyntaxException e) {
-					Message.sendMessageInChannel(event.getChannel(), "wrong-image");
-					e.printStackTrace();
-					return;
-				}
-				builder.appendField("Guild Name", args[1], true);
-				builder.appendField("Link", args[2], true);
-				if (args.length >= 5) {
-					builder.appendField("Description", Arrays.stream(args).skip(4).collect(Collectors.joining(" ")), false);
-				}
-				Message.sendEmbedInChannel(channel, "", builder.build());
-			} else {
-				Message.sendMessageInChannel(event.getChannel(), "no-channel");
-			}
-		} else {
-			Message.sendMessageInChannel(event.getChannel(), help());
+		IChannel channel;
+		String name;
+		String link;
+		String image;
+		String description;
+
+		Message.sendRawMessageInChannel(event.getChannel(), "Okay, listening now! Channel?");
+		String channelListen = Utility.listenFor(event.getChannel(), event.getAuthor(), 60, TimeUnit.SECONDS);
+		channel = Utility.getChannel(event.getGuild(), channelListen);
+		if (channel == null) {
+			Message.sendMessageInChannel(event.getChannel(), "invalid-channel");
+			return;
 		}
+
+		Message.sendRawMessageInChannel(event.getChannel(), "Name?");
+		name = Utility.listenFor(event.getChannel(), event.getAuthor(), 60, TimeUnit.SECONDS);
+		if (name == null)
+			return;
+
+		Message.sendRawMessageInChannel(event.getChannel(), "Invite link?");
+		link = Utility.listenFor(event.getChannel(), event.getAuthor(), 60, TimeUnit.SECONDS);
+		if (link == null)
+			return;
+
+		Message.sendRawMessageInChannel(event.getChannel(), "Image link?");
+		image = Utility.listenFor(event.getChannel(), event.getAuthor(), 60, TimeUnit.SECONDS);
+		if (image == null)
+			return;
+
+		Message.sendRawMessageInChannel(event.getChannel(), "Description? Type `none` for no description");
+		description = Utility.listenFor(event.getChannel(), event.getAuthor(), 60, TimeUnit.SECONDS);
+		if (description == null)
+			return;
+
+		EmbedBuilder builder = new EmbedBuilder();
+		builder.withColor(Color.CYAN);
+		builder.withImage(image);
+		builder.appendField("Guild Name", name, true);
+		builder.appendField("Link", link, true);
+		if (!"none".equals(description.toLowerCase())) builder.appendField("Description", description, false);
+		Message.sendEmbedInChannel(channel, "", builder.build());
 	}
 
 	@Override
